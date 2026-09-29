@@ -1,0 +1,13 @@
+#ifndef ROBOT_STATUS_H
+#define ROBOT_STATUS_H
+
+typedef enum {
+    ROBOT_OK = 0,
+    ROBOT_INVALID_ARGUMENT,
+    ROBOT_NOT_IMPLEMENTED,
+    ROBOT_NO_LINE,
+    ROBOT_NOT_READY,
+    ROBOT_HARDWARE_ERROR
+} RobotStatus;
+
+#endif

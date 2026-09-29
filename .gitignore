@@ -16,12 +16,17 @@ cmake-build-*/
 *.map
 *.lst
 *.su
+*.exe
+*.out
 
 # IDE and editor state
 .vscode/
 .idea/
 .metadata/
 .settings/
+.vs/
+*.user
+*.suo
 *.launch
 *.log
 *.swp

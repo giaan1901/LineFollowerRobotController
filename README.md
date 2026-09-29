@@ -1,33 +1,102 @@
-# ME4071 Line-Following Load Transport Robot — Controller Firmware
+# ME4071 Line-Following Load Transport Robot — controller firmware
 
-This repository is for the robot's STM32 controller firmware only. The controller follows a marked path, monitors a carried load, and drives the transport motors.
+This repository holds the STM32F411CEU6 controller firmware, design contracts,
+and host-side tests. It is a scaffold for team development, **not runnable robot
+firmware**: the I2C sensors, HX711, motor outputs, route markers, and MCU project
+have not been implemented or validated.
 
-## Hardware and requirements
+## Operating sequence
 
-- **Controller:** STM32F411CEU6.
-- **Line tracking:** five line sensors provide the path position used for steering.
-- **Load measurement:** a load cell read through an HX711 interface.
-- **Motion:** motor drivers receive speed and direction commands from the controller.
-- **Firmware behavior:** sample and validate sensor readings, steer to stay on the line, monitor load, and stop the motors when the route ends or a fault is detected.
+`INIT` checks hardware, then the robot follows the line to the loading station.
+It stops, waits for a package, classifies a measured load as 1 kg or 2 kg, and
+only then enters `DELIVER`. A validated destination marker leads to `STOPPED`;
+any unrecoverable fault leads to `ERROR`. The route for each load class remains
+to be defined. The application currently refuses to move and reports missing
+hardware functionality.
 
-Pin assignments, motor driver model, sensor signal levels, load limit, route-end detection, and control tuning must be confirmed against the assembled robot before implementation.
+## Requirements and initial hardware
 
-## Intended operating sequence
+| Item | Requirement or current choice |
+| --- | --- |
+| MCU | STM32F411CEU6 |
+| Drive | Differential drive, two powered wheels and two casters |
+| Track | 26 mm black line on white; minimum curve radius 500 mm |
+| Speed | At least 0.1 m/s; design 0.3 m/s |
+| Tolerances | ±3 mm from line edge while following; ±5 mm final stop |
+| Mass | 4 kg design total, including at most 2 kg payload |
+| Line sensors | Five I2C sensors; model, spacing and addresses unknown |
+| Load sensing | 5 kg load cell with HX711; calibration unknown |
+| Supply | MP1584EN 5 V / 3 A regulator |
 
-1. Initialize the controller, sensors, HX711, and motor outputs with the motors stopped.
-2. Check sensor health and establish the load measurement baseline.
-3. Once operation is enabled, read the five line sensors and drive the motors to follow the path.
-4. Continue monitoring load and sensor validity during transport; stop on a fault or at the designated route end.
+Motor and driver models, encoder availability, all pin assignments, sensor
+electrical details, and route markers are unresolved. The PID defaults and load
+classification windows in `robot_config.h` are starting software choices, not
+validated tuning or calibration. Confirm the electrical design and power budget
+before using hardware.
 
-The start input, route-end signal, and load handling policy are to be defined with the robot's operating procedure.
+## Repository tree
 
-## Firmware architecture
+```text
+.
+├── README.md                     project status and workflow
+├── .gitignore                    generated and local files
+├── docs/
+│   ├── architecture.md           data flow, dependencies, states
+│   ├── hardware-interface.md     electrical interfaces and unknowns
+│   ├── module-contracts.md       APIs, units and ownership
+│   └── testing.md                host and physical validation plan
+├── firmware/
+│   ├── Core/Inc/main.h            MCU integration declaration placeholder
+│   ├── Core/Src/main.c            startup integration placeholder
+│   ├── App/Inc/                    robot_app.h, robot_state.h
+│   ├── App/Src/                    robot_app.c, robot_state.c
+│   ├── Control/Inc/                line_controller.h, motion_controller.h
+│   ├── Control/Src/                line_controller.c, motion_controller.c
+│   ├── Drivers/Inc/                line_sensor.h, load_cell.h, motor.h
+│   ├── Drivers/Src/                line_sensor.c, load_cell.c, motor.c
+│   └── Config/                     robot_config.h, hardware_config.h,
+│                                  robot_status.h
+└── tests/                         host tests and instructions
+```
 
-The intended modules are hardware initialization, line sensing, HX711/load measurement, motor control, route/state control, and fault handling. Keep hardware-specific pin mapping separate from control logic when firmware is added. No STM32 framework or build system has been selected yet.
+## Modules and data flow
 
-## Setup
+`Core` owns STM32 startup and invokes `App`; it must preserve generated code
+when a CubeMX project is added. `App` owns states, load class and route choice.
+`Control` owns line position/PID calculations and differential motor mixing.
+`Drivers` own hardware access only; they must never depend on `App` or
+`Control`. `Config` holds shared requirements and calibration inputs.
 
-1. Confirm the development environment and choose the STM32 toolchain/framework used by the team.
-2. Record the verified pin map, motor driver interface, sensor characteristics, and load-cell calibration data.
-3. Add the corresponding firmware project and build instructions for that environment.
-4. Build, flash, and debug on the STM32F411CEU6 hardware; validate line tracking and load measurement before enabling transport.
+The intended path is **I2C readings → processed five-sensor response → line
+error → steering correction → left/right commands → motor driver**. HX711
+weight feeds load classification in `App`; the class selects a route, not a
+motor command. See [architecture](docs/architecture.md) and
+[contracts](docs/module-contracts.md) for details.
+
+Each teammate can own one module pair (`.h` and `.c`) while using its public
+header as the contract. Coordinate changes to shared status and configuration
+types before merging. Keep hardware code behind driver APIs and add host tests
+for any new calculation or state rule.
+
+## Build and development
+
+No STM32 toolchain, HAL project, startup file, linker script, or board build is
+present. Select the team toolchain, generate or import its MCU project, and
+integrate these modules without replacing generated startup code. Record the
+pin map and calibrations in the hardware documentation. Then build, flash, and
+validate with motors disabled before enabling movement.
+
+Host test commands are in [tests/README.md](tests/README.md). Tests exercise
+software logic only. Development order: verify hardware assignments; implement
+safe motor stop; implement sensor and load adapters; calibrate readings and
+speed mapping; add route detection; integrate the timed control loop; run host
+tests and physical validation. See [testing](docs/testing.md).
+
+## Current status
+
+Line error calculation, bounded PID correction, bounded differential command
+calculation, load-window classification, and explicit state transitions are
+implemented in platform-independent C. Hardware driver functions deliberately
+return `ROBOT_NOT_IMPLEMENTED`; physical safe stopping is **not yet guaranteed**.
+`RobotApp_Init` enters `ERROR` until the required adapters work. Open decisions
+and adapter tasks are listed in [hardware-interface](docs/hardware-interface.md).
