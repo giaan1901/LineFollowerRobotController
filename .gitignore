@@ -1,0 +1,41 @@
+# Build directories and generated artifacts
+build/
+Build/
+Debug/
+Release/
+cmake-build-*/
+.pio/
+*.o
+*.obj
+*.a
+*.d
+*.elf
+*.axf
+*.bin
+*.hex
+*.map
+*.lst
+*.su
+
+# IDE and editor state
+.vscode/
+.idea/
+.metadata/
+.settings/
+*.launch
+*.log
+*.swp
+*.swo
+*~
+
+# Local configuration and temporary files
+.env
+.env.*
+*.local
+*.local.*
+*.tmp
+*.temp
+*.bak
+*.orig
+Thumbs.db
+.DS_Store
