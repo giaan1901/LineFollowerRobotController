@@ -1,0 +1,34 @@
+# CubeIDE regenerates these build directories.
+/Debug/
+/Release/
+/build/
+**/*.o
+**/*.d
+**/*.su
+**/*.cyclo
+**/*.elf
+**/*.hex
+**/*.bin
+**/*.map
+**/*.list
+
+# Local IDE/workspace state and computer-specific editor paths.
+/.metadata/
+/.vscode/
+/.settings/language.settings.xml
+*.launch
+*.log
+*.bak
+*~
+Thumbs.db
+.DS_Store
+
+# Local credentials and environment configuration.
+.env
+.env.*
+!.env.example
+/.aws/
+/.codex/
+
+# Local publishing checkout.
+/.publish/

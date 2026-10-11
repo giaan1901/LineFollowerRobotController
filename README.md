@@ -100,3 +100,8 @@ implemented in platform-independent C. Hardware driver functions deliberately
 return `ROBOT_NOT_IMPLEMENTED`; physical safe stopping is **not yet guaranteed**.
 `RobotApp_Init` enters `ERROR` until the required adapters work. Open decisions
 and adapter tasks are listed in [hardware-interface](docs/hardware-interface.md).
+
+## Complete STM32CubeIDE project
+
+The importable STM32F411CEUx motor bench-test project is in [LineFollower_Project](LineFollower_Project/README.md). That directory includes the CubeIDE configuration, startup code, linker scripts, HAL and CMSIS drivers, and instructions for building on another computer.
+
